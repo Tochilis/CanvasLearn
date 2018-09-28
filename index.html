@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        body {
+            background-image: url(../img/putin.jpg);
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+    </style>
+
+</head>
+<body style="margin: 0;">
+    <canvas id="canvas" style="display: block">Your browser is not supported Canvas, bro!</canvas>
+
+    <script>
+        // рисовалка. рисует, запоминает(s), воспроизводит(r), стирает(c)
+        var canv = document.getElementById('canvas'),
+            ctx    = canv.getContext('2d'),
+            grad = ctx.createLinearGradient(0, 0, 500, 0),
+            isMouseDown = false,
+            coords = [],
+            radius = 2;
+
+        canv.width = window.innerWidth;
+        canv.height = window.innerHeight;
+
+                
+        canv.addEventListener('mousedown', function () {
+            isMouseDown = true;
+            ctx.beginPath();
+        });
+
+        canv.addEventListener('mouseup', function () {
+            isMouseDown = false;
+            coords.push('mouseup');
+        });
+        
+        //повесим на канвас событие по клику
+        canv.addEventListener('mousemove', function (e) {
+            if (isMouseDown) {
+                coords.push([e.clientX, e.clientY]); //записть координат мыши в массив
+                ctx.lineTo(e.clientX, e.clientY);
+                ctx.lineWidth = radius;
+                ctx.stroke();
+
+                ctx.beginPath(); // каждый раз сбрасывает путь для рисования новой фигуры
+                ctx.arc(e.clientX, e.clientY, radius, 0, 2*Math.PI);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(e.clientX, e.clientY);
+            }
+        });
+
+        //очистка канваса
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canv.width, canv.height);
+
+            ctx.beginPath();
+            ctx.fillStyle = 'black';
+        }
+
+        function save() {
+            localStorage.setItem('coords', JSON.stringify(coords));
+        }
+
+        function replay() {
+            var timer = setInterval(function(){
+                if( !coords.length )
+                {
+                    clearInterval(timer);
+                    ctx.beginPath();
+                    return;
+                }
+
+                var crd = coords.shift(),
+                    e = {
+                        clientX: crd["0"],
+                        clientY: crd["1"]
+                    };
+
+                ctx.lineTo(e.clientX, e.clientY);
+                ctx.stroke();
+
+                ctx.beginPath(); // каждый раз сбрасывает путь для рисования новой фигуры
+                ctx.arc(e.clientX, e.clientY, radius, 0, 2*Math.PI);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(e.clientX, e.clientY);
+            }, 10 )
+        }
+
+        // добавляем кнопку повтора
+        document.addEventListener('keypress', function (e) {
+            console.log(e.keyCode);
+            if( e.keyCode == 115 ) {
+                //save
+                save();
+                console.log('Saved');
+
+            }
+            if( e.keyCode == 114 ) {
+                //replay
+                coords = JSON.parse(localStorage.getItem('coords'));
+                clearCanvas();
+                replay();
+                console.log('Replaying');
+            }
+            if( e.keyCode == 99 ) {
+                //clear
+                clearCanvas();
+                console.log('Cleared');
+            }
+        })
+    </script>
+</body>
+</html>
